@@ -59,7 +59,7 @@ namespace PhoneBookBusiness
 
 		public async Task<int> DeletePhonebookEntryAsync(int PhoneBookEntryId)
 		{
-			return await Repo.DeletePhonebookEntryAsync(PhoneBookEntryId);
+			return Repo.DeletePhonebookEntry(PhoneBookEntryId);
 		}
 
 		public async Task<PhoneBook> GetPhoneBookAsync(string Name)

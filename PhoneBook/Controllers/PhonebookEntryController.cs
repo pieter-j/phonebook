@@ -20,12 +20,18 @@ namespace PhoneBook.Controllers
 			PhonebookS = PhonebookService;
 		}
 
-		// GET: api/PhonebookEntry/1
-		//[Route("api/PhonebookEntry/forPhone/{phoneId:int}")]
+		// GET: api/PhonebookEntry/forPhone/1
 		[HttpGet("forPhone/{phoneId:int}", Name = "GetPhoneBookEntries")]
 		public async Task<List<PhoneBookEntry>> GetForPhoneAsync(int phoneId)
 		{
 			return await PhonebookS.GetPhoneBookEntriesAsync(phoneId);
+		}
+		
+		// GET: api/PhonebookEntry/forPhone/1
+		[HttpGet("{phoneId:int}/{search}", Name = "SearchPhoneBookEntries")]
+		public async Task<List<PhoneBookEntry>> GetForPhoneAsync(int phoneId, string search)
+		{
+			return await PhonebookS.FindPhonebookEntriesByNameAsync(phoneId, search);
 		}
 
 		// POST: api/PhonebookEntry
@@ -49,7 +55,7 @@ namespace PhoneBook.Controllers
 		public async Task<ActionResult<PhoneBookEntry>> PutAsync(int id, [FromBody] PhoneBookEntry PhonebookEntry)
 		{
 			(PhoneBookEntry phonebookEntry, List<ValidationError> errors) = await PhonebookS.EditPhonebookEntryAsync(PhonebookEntry);
-			if (errors.Count == 0)
+			if (errors == null || errors.Count == 0)
 			{
 				return phonebookEntry;
 			}

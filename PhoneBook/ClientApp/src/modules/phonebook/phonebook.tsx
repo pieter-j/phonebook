@@ -35,11 +35,21 @@ class Phonebook extends React.PureComponent<PhonebookProps> {
    private addEntry = () => {
       this.props.addNewEntry()
    }
+
    private deleteEntry = (id: number) => {
       this.props.deleteEntry(id)
    }
+
    private editEntry = (id: number) => {
       this.props.editEntry(id)
+   }
+
+   private updateSearch = (search: string) => {
+      this.props.updateSearch(search)
+   }
+
+   private saveEntry = () => {
+      this.props.saveEntry();
    }
 
    private async ensureDataFetched() {
@@ -67,22 +77,32 @@ class Phonebook extends React.PureComponent<PhonebookProps> {
                <tr>
                   <th>Name</th>
                   <th>Phone Number</th>
-                  <th>&nbsp;</th>
+                     <th>Search <input type="text" value={this.props.search} onChange={(e) => this.updateSearch(e.target.value )} /></th>
                </tr>
             </thead>
             <tbody>
                {this.props.entries.map((entry: PhonebookStore.PhonebookEntries) =>
-                  <tr key={entry.id}>
-                     <td>{entry.name}</td>
-                     <td>{entry.phoneNumber}</td>
-                     <td><button onClick={()=>this.editEntry(entry.id)}>Edit</button><button onClick={()=>this.deleteEntry(entry.id)}>Delete</button></td>
-                  </tr>
-               )}
-               <tr key={0}>
-                  <td><input type="text" value={this.props.newEntry.name} onChange={(e) => this.updateNewEntryProperty({ name: e.target.value })} /> </td>
-                  <td><input type="text" value={this.props.newEntry.phoneNumber} onChange={(e) => this.updateNewEntryProperty({ phoneNumber: e.target.value })} /></td>
-                  <td><button onClick={this.addEntry}>Add</button></td>
-               </tr>
+                  (entry.id === this.props.editId) ?
+                        <tr key={entry.id}>
+                           <td><input type="text" value={this.props.newEntry.name} onChange={(e) => this.updateNewEntryProperty({ name: e.target.value })} /></td>
+                           <td><input type="text" value={this.props.newEntry.phoneNumber } onChange={(e) => this.updateNewEntryProperty({ phoneNumber: e.target.value })} /></td>
+                        <td><button onClick={() => this.saveEntry()}>Save</button></td>
+                     </tr>
+                  :
+                     <tr key={entry.id}>
+                        <td>{entry.name}</td>
+                        <td>{entry.phoneNumber}</td>
+                        <td><button onClick={() => this.editEntry(entry.id)}>Edit</button><button onClick={() => this.deleteEntry(entry.id)}>Delete</button></td>
+                     </tr>                  
+                  )}
+                  {
+                     (this.props.editId === 0) ?
+                        <tr key={0}>
+                           <td><input type="text" value={this.props.newEntry.name} onChange={(e) => this.updateNewEntryProperty({ name: e.target.value })} /> </td>
+                           <td><input type="text" value={this.props.newEntry.phoneNumber} onChange={(e) => this.updateNewEntryProperty({ phoneNumber: e.target.value })} /></td>
+                           <td><button onClick={this.addEntry}>Add</button></td>
+                        </tr>
+                     : null}
             </tbody>
          </table>
             <p>{this.props.errors}</p>

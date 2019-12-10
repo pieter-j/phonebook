@@ -102,20 +102,11 @@ namespace PhoneBookData.Repo
 				}
 			}
 		}
-		public async Task<int> DeletePhonebookEntryAsync(int PhoneBookEntryId)
+		public int DeletePhonebookEntry(int PhoneBookEntryId)
 		{
 
-			var phoneBookEntry = await GetPhonebookEntryByIDAsync(PhoneBookEntryId);
-			if (phoneBookEntry == null)
-			{
-				return 0;
-			}
-			else
-			{
-				PhoneDB.Remove(phoneBookEntry);
-				return await Uow.SaveChangesAsync();
-			}
-
+			PhoneDB.Remove(new PhoneBookEntry { Id = PhoneBookEntryId });
+			return PhoneDB.SaveChanges();
 		}
 
 		public async Task<List<PhoneBookEntry>> GetEntriesForPhoneBookAsync(int PhoneBookID)

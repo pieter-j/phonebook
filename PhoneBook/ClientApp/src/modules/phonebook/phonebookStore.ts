@@ -16,7 +16,9 @@ export interface PhonebookState {
    entries: PhonebookEntries[];
    newEntry: PhonebookEntries;
    startIndex: number;
-   errors: string
+   errors: string;
+   editId: number;
+   search: string;
 }
 
 export interface PhonebookEntries {
@@ -79,12 +81,21 @@ interface ReceiveSaveEntryAction {
 
 interface RequestDeleteEntryAction {
    type: 'REQUEST_DELETE_ENTRY';
-   id: number;
 }
 
 interface ReceiveDeleteEntryAction {
    type: 'RECEIVE_DELETE_ENTRY';
    id: number;
+}
+
+interface SearchEntryAction {
+   type: 'REQUEST_SEARCH_ENTRY';
+   search: string;
+}
+
+interface ReceiveSearchEntryAction {
+   type: 'RECEIVE_SEARCH_ENTRIES';
+   entries: PhonebookEntries[];
 }
 
 interface ReceiveErrorAction {
@@ -98,7 +109,7 @@ interface ReceiveErrorAction {
 type KnownAction = RequestPhonebookAction | ReceivePhonebookAction | RequestPhonebookEntriesAction
    | ReceivePhonebookEntriesAction | UpdateNewEntryAction | RequestAddNewEntryAction | ReceiveAddNewEntryAction
    | ReceiveErrorAction | EditEntryAction | RequestSaveEntryAction | ReceiveSaveEntryAction
-   | RequestDeleteEntryAction | ReceiveDeleteEntryAction;
+   | RequestDeleteEntryAction | ReceiveDeleteEntryAction | SearchEntryAction | ReceiveSearchEntryAction;
 
 // ----------------
 // ACTION CREATORS - These are functions exposed to UI components that will trigger a state transition.
@@ -172,13 +183,13 @@ export const actionCreators = {
    editEntry: (id: number): AppThunkAction< KnownAction > => async (dispatch, getState) => {
       dispatch({ type: 'EDIT_ENTRY', id });
    },
-   saveEntry: (id: number): AppThunkAction<KnownAction> => async (dispatch, getState) => {
+   saveEntry: (): AppThunkAction<KnownAction> => async (dispatch, getState) => {
       const appState = getState();
       if (appState && appState.phonebook && appState.phonebook.newEntry && appState.phonebook.newEntry.name && appState.phonebook.newEntry.phoneNumber) {
          dispatch({ type: 'REQUEST_SAVE_ENTRY' });
          try {
             let newEntry: any = Object.assign({}, appState.phonebook.newEntry, { phoneBookId: appState.phonebook.id });
-            let response = await fetch(`/api/PhonebookEntry/`,
+            let response = await fetch(`/api/PhonebookEntry/${newEntry.id}`,
                {
                   headers: {
                      'Accept': 'application/json',
@@ -202,9 +213,49 @@ export const actionCreators = {
       }
    },
    deleteEntry: (id: number): AppThunkAction<KnownAction> => async (dispatch, getState) => {
-
+      dispatch({ type: 'REQUEST_DELETE_ENTRY' });
+      try {
+         let response = await fetch(`/api/PhonebookEntry/${id}`,
+            {
+               headers: {
+                  'Accept': 'application/json',
+                  'Content-Type': 'application/json'
+               },
+               method: "DELETE"
+            });
+         if (response.status == 200) {
+            dispatch({ type: 'RECEIVE_DELETE_ENTRY', id });
+         } else {
+            let errors: any[] = await response.json();
+            let stringErrors = errors.map((v) => v.description + '\n').toString();
+            dispatch({ type: 'RECEIVE_ERROR', value: stringErrors });
+         }
+      } catch (ex) {
+         console.log('requestPhonebook ex', ex);
+         dispatch({ type: 'RECEIVE_ERROR', value: ex.message });
+      }
+   },
+   updateSearch: (search: string): AppThunkAction<KnownAction> => async (dispatch, getState) => {
+      dispatch({ type: 'REQUEST_SEARCH_ENTRY', search });
+      try {
+         const appState = getState();
+         if (appState && appState.phonebook && appState.phonebook.id) {
+            if (search) {
+               let response = await fetch(`/api/PhonebookEntry/${appState.phonebook.id}/${search}`);
+               let entries: PhonebookEntries[] = await response.json();
+               dispatch({ type: 'RECEIVE_SEARCH_ENTRIES', entries });
+            } else {
+               dispatch({ type: 'REQUEST_PHONEBOOK_ENTRIES', startIndex: 0 });
+               let response = await fetch(`/api/PhonebookEntry/forPhone/${appState.phonebook.id}`);
+               let entries: PhonebookEntries[] = await response.json();
+               dispatch({ type: 'RECEIVE_PHONEBOOK_ENTRIES', startIndex: 0, entries });
+            }
+         }
+      } catch (ex) {
+         console.log('requestPhonebook ex', ex);
+         dispatch({ type: 'RECEIVE_ERROR', value: ex.message });
+      }
    }
-
 };
 
 // ----------------
@@ -217,7 +268,9 @@ const unloadedState: PhonebookState = {
       name: '',
       phoneNumber: ''
    },
-   errors: ''
+   errors: '',
+   editId: 0,
+   search: ''
 };
 
 export const reducer: Reducer<PhonebookState> = (state: PhonebookState | undefined, incomingAction: Action): PhonebookState => {
@@ -287,6 +340,66 @@ export const reducer: Reducer<PhonebookState> = (state: PhonebookState | undefin
             };
          }
          break;
+      case 'REQUEST_SAVE_ENTRY':
+         return {
+            ...state,
+            isLoading: true
+         };
+      case 'RECEIVE_SAVE_ENTRY':
+         if (action.value) {
+            return {
+               ...state,
+               entries: state.entries.map((val) => val.id == action.value.id ? action.value : val),
+               isLoading: false,
+               newEntry: {
+                  id: 0,
+                  name: '',
+                  phoneNumber: ''
+               },
+               errors: '',
+               editId: 0
+            };
+         }
+         break;
+      case 'REQUEST_DELETE_ENTRY':
+         return {
+            ...state,
+            isLoading: true
+         };
+      case 'RECEIVE_DELETE_ENTRY':
+         return {
+            ...state,
+            entries: state.entries.filter((val) => val.id !== action.id ),
+            isLoading: false,
+            newEntry: {
+               id: 0,
+               name: '',
+               phoneNumber: ''
+            },
+            errors: ''
+         };
+      case 'EDIT_ENTRY':
+         return {
+            ...state,
+            editId: action.id,
+            newEntry: state.entries.find((value) => value.id === action.id) || {
+               id: 0,
+               name: '',
+               phoneNumber: ''
+            },
+            errors: ''
+         }
+      case 'REQUEST_SEARCH_ENTRY':
+         return {
+            ...state,
+            search: action.search
+         }
+      case 'RECEIVE_SEARCH_ENTRIES':
+            return {
+               ...state,
+               entries: action.entries,
+               isLoading: false
+            };
       case 'RECEIVE_ERROR':
          return {
             ...state,

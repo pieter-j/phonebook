@@ -13,7 +13,7 @@ namespace PhoneBookInterfaces
 		Task<PhoneBook> GetPhoneBookByNameWithEntriesAsync(string Name);
 		Task<PhoneBookEntry> CreatePhonebookEntryAsync(int PhoneBookID, string Name, string PhoneNumber);
 		Task<PhoneBookEntry> EditPhonebookEntryAsync(PhoneBookEntry EditedPhoneBookEntry);
-		Task<int> DeletePhonebookEntryAsync(int PhoneBookEntryId);
+		int DeletePhonebookEntry(int PhoneBookEntryId);
 		Task<List<PhoneBookEntry>> GetEntriesForPhoneBookAsync(int PhoneBookID);
 		Task<PhoneBookEntry> GetPhonebookEntryByIDAsync(int EntryID);
 		Task<List<PhoneBookEntry>> FindPhonebookEntriesByNameAsync(int PhoneBookID, string NamePart);
