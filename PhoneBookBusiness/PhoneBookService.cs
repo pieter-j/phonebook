@@ -31,7 +31,7 @@ namespace PhoneBookBusiness
 			}
 		}
 
-		public async Task<(PhoneBookEntry, List<ValidationError>)> CreatePhonebookEntryAsync(long PhoneBookID, string Name, string PhoneNumber)
+		public async Task<(PhoneBookEntry, List<ValidationError>)> CreatePhonebookEntryAsync(int PhoneBookID, string Name, string PhoneNumber)
 		{
 			var ValidationErrors = PhoneBookEntryValidator.ValidateAll(Name,PhoneNumber, PhoneBookID);
 			if (ValidationErrors.Count == 0)
@@ -44,17 +44,35 @@ namespace PhoneBookBusiness
 			}
 		}
 
+		public async Task<(PhoneBookEntry, List<ValidationError>)> EditPhonebookEntryAsync(PhoneBookEntry EditedPhoneBookEntry)
+		{
+			var ValidationErrors = PhoneBookEntryValidator.ValidateAll(EditedPhoneBookEntry.Name, EditedPhoneBookEntry.PhoneNumber, EditedPhoneBookEntry.PhoneBookId);
+			if (ValidationErrors.Count == 0)
+			{
+				return (await Repo.EditPhonebookEntryAsync(EditedPhoneBookEntry), null);
+			}
+			else
+			{
+				return (null, ValidationErrors);
+			}
+		}
+
+		public async Task<int> DeletePhonebookEntryAsync(int PhoneBookEntryId)
+		{
+			return await Repo.DeletePhonebookEntryAsync(PhoneBookEntryId);
+		}
+
 		public async Task<PhoneBook> GetPhoneBookAsync(string Name)
 		{
 			return await Repo.GetPhoneBookByNameWithEntriesAsync(Name);
 		}
 
-		public async Task<IEnumerable< PhoneBookEntry>> GetPhoneBookEntriesAsync(long PhonebookId)
+		public async Task<List< PhoneBookEntry>> GetPhoneBookEntriesAsync(int PhonebookId)
 		{
 			return await Repo.GetEntriesForPhoneBookAsync(PhonebookId);
 		}
 		
-		public async Task<IEnumerable<PhoneBookEntry>> FindPhonebookEntriesByNameAsync(long PhonebookId, string NamePart)
+		public async Task<List<PhoneBookEntry>> FindPhonebookEntriesByNameAsync(int PhonebookId, string NamePart)
 		{
 			return await Repo.FindPhonebookEntriesByNameAsync(PhonebookId, NamePart);
 		}

@@ -20,52 +20,73 @@ class Phonebook extends React.PureComponent<PhonebookProps> {
 
    // This method is called when the route parameters change
    public componentDidUpdate() {
-      this.ensureDataFetched();
+     // this.ensureDataFetched();
    }
 
    private fetchEntries = () => {
       const startIndex = parseInt(this.props.match.params.startIndex, 10) || 0;
       this.props.requestPhonebookEntries(startIndex);
    }
-   
+
+   private updateNewEntryProperty = (updateProp: any) => {
+      this.props.updatePhonebookNewEntryProperty(updateProp);
+   }
+
+   private addEntry = () => {
+      this.props.addNewEntry()
+   }
+   private deleteEntry = (id: number) => {
+      this.props.deleteEntry(id)
+   }
+   private editEntry = (id: number) => {
+      this.props.editEntry(id)
+   }
+
+   private async ensureDataFetched() {
+      const startIndex = parseInt(this.props.match.params.startIndex, 10) || 0;
+      await this.props.requestPhonebook(this.props.name);
+      this.props.requestPhonebookEntries(startIndex);
+   }
+
    //<p>Phonebook Name: <input type="text" value={this.props.name} /> {this.props.id}</p>
    public render() {
       return (
          <React.Fragment>
             <h1 id="tabelLabel">Phonebook</h1>
-            <p>Phonebook Name: {this.props.name}  {this.props.id} <button
-               onClick={this.fetchEntries}>Fetch</button> </p>
-            
+            <p>Phonebook Name: {this.props.name} </p>            
             {this.renderPhonebook()}
-            {this.renderPagination()}
          </React.Fragment>
       );
    }
 
-   private ensureDataFetched() {
-      const startIndex = parseInt(this.props.match.params.startIndex, 10) || 0;
-      this.props.requestPhonebook(this.props.name);
-      this.props.requestPhonebookEntries(startIndex);
-   }
-
    private renderPhonebook() {
       return (
+      <div>
          <table className='table table-striped' aria-labelledby="tabelLabel">
             <thead>
                <tr>
                   <th>Name</th>
                   <th>Phone Number</th>
+                  <th>&nbsp;</th>
                </tr>
             </thead>
             <tbody>
                {this.props.entries.map((entry: PhonebookStore.PhonebookEntries) =>
                   <tr key={entry.id}>
                      <td>{entry.name}</td>
-                     <td>{entry.PhoneNumber}</td>
+                     <td>{entry.phoneNumber}</td>
+                     <td><button onClick={()=>this.editEntry(entry.id)}>Edit</button><button onClick={()=>this.deleteEntry(entry.id)}>Delete</button></td>
                   </tr>
                )}
+               <tr key={0}>
+                  <td><input type="text" value={this.props.newEntry.name} onChange={(e) => this.updateNewEntryProperty({ name: e.target.value })} /> </td>
+                  <td><input type="text" value={this.props.newEntry.phoneNumber} onChange={(e) => this.updateNewEntryProperty({ phoneNumber: e.target.value })} /></td>
+                  <td><button onClick={this.addEntry}>Add</button></td>
+               </tr>
             </tbody>
          </table>
+            <p>{this.props.errors}</p>
+         </div>
       );
    }
 

@@ -32,7 +32,7 @@ namespace PhoneBookBusiness
 
 			string trimPhoneNumber = PhoneNumber.Replace(" ", "");
 			
-			if (trimPhoneNumber.Length != 10 || trimPhoneNumber.Length != 13) Errors.Add(new ValidationError { ID = (int)ValidationErrorEnum.LengthIncorrect, Name = "Length Incorrect", Description = "Phone numbers can only be 10 characters for local phone numbers E.G 083 123 4567 or 12 characters for international numbers E.G +27 83 123 4567 . ( not counting spaces)" });			
+			if (trimPhoneNumber.Length != 10 && trimPhoneNumber.Length != 12) Errors.Add(new ValidationError { ID = (int)ValidationErrorEnum.LengthIncorrect, Name = "Length Incorrect", Description = "Phone numbers can only be 10 characters for local phone numbers E.G 083 123 4567 or 12 characters for international numbers E.G +27 83 123 4567 . ( not counting spaces)" });			
 			if (!PhoneNumber.All(x => (x >= '0' && x <= '9') || x == ' ' || x == '+')) Errors.Add(new ValidationError { ID = (int)ValidationErrorEnum.InvalidCharacters, Name = "Invalid Characters", Description = "Phone numbers can only contain numbers, spaces and a + in the beginning of a international number." });
 			int PlusLocation = trimPhoneNumber.LastIndexOf('+');
 			if(!(PlusLocation == -1 || PlusLocation == 0 )) Errors.Add(new ValidationError { ID = (int)ValidationErrorEnum.InvalidCharacters, Name = "Invalid Characters", Description = "Phone numbers can only have a + in the beginning of a international number E.G +27 83 123 4567" });

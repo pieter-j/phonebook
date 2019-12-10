@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
 using PhoneBookModels;
 using PhoneBookInterfaces;
+using System;
 
 namespace PhoneBookData.Repo
 {
@@ -31,9 +32,9 @@ namespace PhoneBookData.Repo
 			return phoneBook;
 		}
 
-		public async Task<PhoneBook> GetPhoneBookByIDAsync(long PhoneBookID)
+		public async Task<PhoneBook> GetPhoneBookByIDAsync(int PhoneBookID)
 		{
-			var phoneBook = await (from pb in PhoneDB.PhoneBooks where pb.ID == PhoneBookID select pb).FirstOrDefaultAsync();
+			var phoneBook = await (from pb in PhoneDB.PhoneBooks where pb.Id == PhoneBookID select pb).FirstOrDefaultAsync();
 			return phoneBook;
 		}
 
@@ -43,9 +44,9 @@ namespace PhoneBookData.Repo
 			return phoneBook;
 		}
 
-		public async Task<PhoneBook> GetPhoneBookByIDWithEntriesAsync(long PhoneBookID)
+		public async Task<PhoneBook> GetPhoneBookByIDWithEntriesAsync(int PhoneBookID)
 		{
-			var phoneBook = await (from pb in PhoneDB.PhoneBooks where pb.ID == PhoneBookID select pb).Include(pb => pb.Entries).FirstOrDefaultAsync();
+			var phoneBook = await (from pb in PhoneDB.PhoneBooks where pb.Id == PhoneBookID select pb).Include(pb => pb.Entries).FirstOrDefaultAsync();
 			return phoneBook;
 		}
 
@@ -55,7 +56,7 @@ namespace PhoneBookData.Repo
 			return phoneBook;
 		}
 
-		public async Task<PhoneBookEntry> CreatePhonebookEntryAsync(long PhoneBookID, string Name, string PhoneNumber)
+		public async Task<PhoneBookEntry> CreatePhonebookEntryAsync(int PhoneBookID, string Name, string PhoneNumber)
 		{
 			var phoneBook = await GetPhoneBookByIDAsync(PhoneBookID);
 			if (phoneBook == null)
@@ -64,29 +65,77 @@ namespace PhoneBookData.Repo
 			}
 			else
 			{
-				var phoneBookEntry = new PhoneBookEntry() { Name = Name, PhoneNumber = PhoneNumber };
-				phoneBook.Entries.Append(phoneBookEntry);
-				await Uow.SaveChangesAsync();
-				return phoneBookEntry;
+				try
+				{
+					var phoneBookEntry = new PhoneBookEntry() { Name = Name, PhoneNumber = PhoneNumber, PhoneBookId = PhoneBookID };
+					PhoneDB.Add(phoneBookEntry);
+					await Uow.SaveChangesAsync();
+					return phoneBookEntry;
+				} catch(Exception ex)
+				{
+					Console.WriteLine(ex.Message);
+					return null;
+				}
 			}
 		}
 
-		public async Task<IEnumerable<PhoneBookEntry>> GetEntriesForPhoneBookAsync(long PhoneBookID)
+		public async Task<PhoneBookEntry> EditPhonebookEntryAsync(PhoneBookEntry EditedPhoneBookEntry)
 		{
-			var phoneBookEntries = await (from pbe in PhoneDB.PhoneBookEntries where pbe.PhoneBookID == PhoneBookID select pbe).ToListAsync();
+			var phoneBookEntry = await GetPhonebookEntryByIDAsync(EditedPhoneBookEntry.Id);
+			if (phoneBookEntry == null)
+			{
+				return null;
+			}
+			else
+			{
+				try
+				{
+					phoneBookEntry.Name = EditedPhoneBookEntry.Name;
+					phoneBookEntry.PhoneNumber = EditedPhoneBookEntry.PhoneNumber;
+					await Uow.SaveChangesAsync();
+					return phoneBookEntry;
+				}
+				catch (Exception ex)
+				{
+					Console.WriteLine(ex.Message);
+					return null;
+				}
+			}
+		}
+		public async Task<int> DeletePhonebookEntryAsync(int PhoneBookEntryId)
+		{
+
+			var phoneBookEntry = await GetPhonebookEntryByIDAsync(PhoneBookEntryId);
+			if (phoneBookEntry == null)
+			{
+				return 0;
+			}
+			else
+			{
+				PhoneDB.Remove(phoneBookEntry);
+				return await Uow.SaveChangesAsync();
+			}
+
+		}
+
+		public async Task<List<PhoneBookEntry>> GetEntriesForPhoneBookAsync(int PhoneBookID)
+		{
+			var phoneBookEntries = await (from pbe in PhoneDB.PhoneBookEntries where pbe.PhoneBookId == PhoneBookID select pbe).ToListAsync();
 			return phoneBookEntries;
 		}
 
-		public async Task<PhoneBookEntry> GetPhonebookEntryByIDAsync(long EntryID)
+		public async Task<PhoneBookEntry> GetPhonebookEntryByIDAsync(int EntryID)
 		{
-			var phoneBookEntry = await (from pbe in PhoneDB.PhoneBookEntries where pbe.ID == EntryID select pbe).FirstOrDefaultAsync();
+			var phoneBookEntry = await (from pbe in PhoneDB.PhoneBookEntries where pbe.Id == EntryID select pbe).FirstOrDefaultAsync();
 			return phoneBookEntry;
 		}
 
-		public async Task<IEnumerable<PhoneBookEntry>> FindPhonebookEntriesByNameAsync(long PhoneBookID, string NamePart)
+		public async Task<List<PhoneBookEntry>> FindPhonebookEntriesByNameAsync(int PhoneBookID, string NamePart)
 		{
-			var phoneBookEntries = await (from pbe in PhoneDB.PhoneBookEntries where pbe.PhoneBookID == PhoneBookID && pbe.Name.Contains(NamePart) select pbe).ToListAsync();
+			var phoneBookEntries = await (from pbe in PhoneDB.PhoneBookEntries where pbe.PhoneBookId == PhoneBookID && pbe.Name.Contains(NamePart) select pbe).ToListAsync();
 			return phoneBookEntries;
 		}
+
+
 	}
 }
